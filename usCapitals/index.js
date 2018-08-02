@@ -309,10 +309,12 @@ const DECK_LENGTH = capitalsDictionary.length;
 
 const handlers = {
   // Open State Capitals Quiz
-  'LaunchRequest': function() {
+  LaunchRequest() {
     if (Object.keys(this.attributes).length === 0) {
-      this.attributes.flashcards.numberCorrect = 0;
-      this.attributes.flashcards.currentFlashcardIndex = 0;
+      this.attributes.flashcards = {
+        'currentFlashcardIndex': 0,
+        'numberCorrect': 0
+      };
 
       this.response.speak(AskQuestion(this.attributes)).listen(AskQuestion(this.attributes));
     } else {
@@ -320,13 +322,17 @@ const handlers = {
       const currentFlashcardIndex = this.attributes.flashcards.currentFlashcardIndex;
 
       this.response.speak(`Welcome back to the State Capitals quiz. You are on
-        question ${currentFlashcardIndex} and have answered ${numberCorrect} correctly. ${AskQuestion(this.attributes)}`);
+        question ${currentFlashcardIndex + 1} and have answered ${numberCorrect}
+        correctly. ${AskQuestion(this.attributes)}`);
     }
     this.emit(':responseReady');
   },
 
   // User gives an answer
-  'AnswerIntent': function() {
+  StateCapitalsIntent() {
+    this.response.speak('Great job!');
+    this.emit(':responseReady');
+    return;
     const userAnswer = this.event.request.intent.slots.answer.value;
     const currentFlashcardIndex = this.attributes.flashcards.currentFlashcardIndex;
     const currentIndex = capitalsDictionary[currentFlashcardIndex];
@@ -373,7 +379,7 @@ const handlers = {
 };
 
 // Test my {language} knowledge
-const AskQuestion = function(attributes) {
+const AskQuestion = (attributes) => {
   const currentFlashcardIndex = attributes.flashcards.currentFlashcardIndex;
   if (currentFlashcardIndex >= DECK_LENGTH) {
     return 'No questions remaining.';
@@ -381,13 +387,12 @@ const AskQuestion = function(attributes) {
     const currentState = capitalsDictionary[currentFlashcardIndex].state;
     return `What is the capital of ${currentState}?`;
   }
-
 };
 
-  exports.handler = function(event, context, callback){
-    const alexa = Alexa.handler(event, context, callback);
+exports.handler = function(event, context, callback){
+  const alexa = Alexa.handler(event, context, callback);
 
-    alexa.dynamoDBTableName = 'StateCapitalFlashcards';
-    alexa.registerHandlers(handlers);
-    alexa.execute();
-  };
+  alexa.dynamoDBTableName = 'StateCapitalFlashcards';
+  alexa.registerHandlers(handlers);
+  alexa.execute();
+};
